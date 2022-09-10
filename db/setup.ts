@@ -45,22 +45,25 @@ for(let applicant of applicants){
 }
 }
 
-everythingApplicants();
+
 
 function everythingInterviewers(){
     
         const interviewers = [
             {
                 name: "Donald Resler",
-                email: "donald@gmail.com"
+                email: "donald@gmail.com",
+                companyId: 1
             },
             {
                 name: "Tom Keen",
-                email: "tom@gmail.com"
+                email: "tom@gmail.com",
+                companyId: 2
             },
             {
                 name: "Katarina Rostova",
-                email: "katarina@gmail.com"
+                email: "katarina@gmail.com",
+                companyId: 3
             }
         ]
 
@@ -74,13 +77,15 @@ function everythingInterviewers(){
             id INTEGER NOT NULL,
             name TEXT NOT NULL,
             email TEXT NOT NULL,
-            PRIMARY KEY (id)
+            companyId INTEGER NOT NULL,
+            PRIMARY KEY (id),
+            FOREIGN KEY (companyId) REFERENCES companies(id) ON DELETE CASCADE
         );
     `)
     createInterviewersTable.run();
 
     const createNewInterviewer = db.prepare(`
-        INSERT INTO interviewers (name, email) VALUES (@name, @email);
+        INSERT INTO interviewers (name, email, companyId) VALUES (@name, @email, @companyId);
     `)
 
     for(let interviewer of interviewers){
@@ -88,7 +93,7 @@ function everythingInterviewers(){
     }
 }
 
-everythingInterviewers();
+
 
 function everythingInterviews(){
         
@@ -178,4 +183,103 @@ function everythingInterviews(){
         }
 }
 
+
+
+function everythingCompanies(){
+        
+        const companies = [
+            {
+                name: "Facebook",
+                city: "Menlo Park"
+            },
+            {
+                name: "Google",
+                city: "Mountain View"
+            },
+            {
+                name: "Apple",
+                city: "Cupertino"
+            }
+        ]
+    
+    const dropCompaniesTable = db.prepare(`
+        DROP TABLE IF EXISTS companies;
+    `)
+    dropCompaniesTable.run();
+    
+    const createCompaniesTable = db.prepare(`
+        CREATE TABLE IF NOT EXISTS companies (
+            id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            city TEXT NOT NULL,
+            PRIMARY KEY (id)
+        );
+    `)
+    createCompaniesTable.run();
+    
+    const createNewCompany = db.prepare(`
+        INSERT INTO companies (name, city) VALUES (@name, @city);
+    `)
+    
+    for(let company of companies){
+        createNewCompany.run(company);
+    }
+}
+
+
+
+function everythingEmployees(){
+            
+            const employees = [
+                {
+                    name: "Mark Zuckerberg",
+                    email: "mark@facebook.com",
+                    position: "CEO",
+                    companyId: 1
+                },
+                {
+                    name: "Sundar Pichai",
+                    email: "sundar@gmail.com",
+                    position: "CEO",
+                    companyId: 2
+                },
+                {
+                    name: "Tim Cook",
+                    email: "tim@apple.com",
+                    position: "CEO",
+                    companyId: 3
+                }
+            ]
+
+        const dropEmployeesTable = db.prepare(`
+            DROP TABLE IF EXISTS employees;
+        `)
+        dropEmployeesTable.run();
+
+        const createEmployeesTable = db.prepare(`
+            CREATE TABLE IF NOT EXISTS employees (
+                id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL,
+                position TEXT NOT NULL,
+                companyId INTEGER NOT NULL,
+                PRIMARY KEY (id),
+                FOREIGN KEY (companyId) REFERENCES companies(id) ON DELETE CASCADE
+            );
+        `)
+        createEmployeesTable.run();
+
+        const createNewEmployee = db.prepare(`
+            INSERT INTO employees (name, email, position, companyId) VALUES (@name, @email, @position, @companyId);
+        `)
+
+        for(let employee of employees){
+            createNewEmployee.run(employee);
+        }
+}
+
+everythingCompanies();
+everythingEmployees();
+everythingApplicants();
+everythingInterviewers();
 everythingInterviews();
