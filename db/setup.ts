@@ -74,8 +74,7 @@ function everythingInterviewers(){
             id INTEGER NOT NULL,
             name TEXT NOT NULL,
             email TEXT NOT NULL,
-            companyId INTEGER NOT NULL,
-            PRIMARY KEY (id),
+            PRIMARY KEY (id)
         );
     `)
     createInterviewersTable.run();
@@ -98,55 +97,73 @@ function everythingInterviews(){
                     applicantId: 1,
                     interviewerId: 1,
                     date: "2021-01-01",
-                    score: 5
+                    score: 5,
+                    position: "Software Engineer",
+                    successful: 1
                 },
                 {
                     applicantId: 1,
                     interviewerId: 2,
                     date: "2021-01-01",
-                    score: 4
+                    score: 4,
+                    position: "Software Engineer",
+                    successful: 1
                 },
                 {
                     applicantId: 1,
                     interviewerId: 3,
                     date: "2021-01-01",
-                    score: 3
+                    score: 3,
+                    position: "DevOPS Engineer",
+                    successful: 0
                 },
                 {
                     applicantId: 2,
                     interviewerId: 1,
                     date: "2021-01-04",
                     score: 3,
+                    position: "DevOPS Engineer",
+                    successful: 0
                 },
                 {
                     applicantId: 2,
                     interviewerId: 2,
                     date: "2021-01-04",
                     score: 4,
+                    position: "Web Developer",
+                    successful: 1
                 },
                 {
                     applicantId: 2,
                     interviewerId: 3,
                     date: "2021-01-04",
                     score: 2,
+                    position: "Web Developer",
+                    successful: 0
                 },
                 {
                     applicantId: 3,
                     interviewerId: 1,
                     date: "2021-01-07",
                     score: 5,
+                    position: "Frontend Developer",
+                    successful: 1
                 },
                 {
                     applicantId: 3,
                     interviewerId: 2,
                     date: "2021-01-07",
                     score: 5,
+                    position: "Frontend Developer",
+                    successful: 1
                 },
                 {
                     applicantId: 3,
                     interviewerId: 3,
                     date: "2021-01-07",
-                    score: 5,
+                    score: 4,
+                    position: "Backend Developer",
+                    successful: 1
                 }
             ]
     
@@ -162,6 +179,8 @@ function everythingInterviews(){
                 interviewerId INTEGER  NOT NULL,
                 date TEXT,
                 score INTEGER,
+                position TEXT,
+                successful INTEGER,
                 PRIMARY KEY (id),
                 FOREIGN KEY (applicantId) REFERENCES applicants(id) ON DELETE CASCADE,
                 FOREIGN KEY (interviewerId) REFERENCES interviewers(id) ON DELETE CASCADE
@@ -171,7 +190,7 @@ function everythingInterviews(){
 
     
         const createNewInterview = db.prepare(`
-            INSERT INTO interviews (applicantId, interviewerId, date, score) VALUES (@applicantId, @interviewerId, @date, @score);
+            INSERT INTO interviews (applicantId, interviewerId, date, score, position, successful) VALUES (@applicantId, @interviewerId, @date, @score, @position, @successful);
         `)
     
         for(let interview of interviews){

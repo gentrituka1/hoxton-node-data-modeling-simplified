@@ -10,12 +10,29 @@ app.use(express.json());
 
 const port = 4000;
 
+const getAllApplicants = db.prepare(`
+    SELECT * FROM applicants;
+`)
+
 const getApplicantById = db.prepare(`
     SELECT * FROM applicants WHERE id = @id;
 `)
 
+const createNewApplicant = db.prepare(`
+    INSERT INTO applicants (name, email) VALUES (@name, @email);
+`)
+
+
+const getAllInterviewers = db.prepare(`
+    SELECT * FROM interviewers;
+`)
+
 const getInterviewerById = db.prepare(`
     SELECT * FROM interviewers WHERE id = @id;
+`)
+
+const createNewInterviewer = db.prepare(`
+    INSERT INTO interviewers (name, email) VALUES (@name, @email);
 `)
 
 
@@ -47,16 +64,8 @@ const getInterviewById = db.prepare(`
     SELECT * FROM interviews WHERE id = @id;
 `)
 
-const createNewApplicant = db.prepare(`
-    INSERT INTO applicants (name, email) VALUES (@name, @email);
-`)
-
-const createNewInterviewer = db.prepare(`
-    INSERT INTO interviewers (name, email, companyId) VALUES (@name, @email, companyId);
-`)
-
 const createNewInterview = db.prepare(`
-    INSERT INTO interviews (applicantId, interviewerId, date, score) VALUES (@applicantId, @interviewerId, @date, @score);
+    INSERT INTO interviews (applicantId, interviewerId, date, score, position, successful) VALUES (@applicantId, @interviewerId, @date, @score, @position, @successful);
 `)
 
 
@@ -70,6 +79,22 @@ const getCompanyById = db.prepare(`
 
 const createNewCompany = db.prepare(`
     INSERT INTO companies (name, city) VALUES (@name, @city);
+`)
+
+const getAllEmployees = db.prepare(`
+    SELECT * FROM employees;
+`)
+
+const getEmployeeById = db.prepare(`
+    SELECT * FROM employees WHERE id = @id;
+`)
+
+const createNewEmployee = db.prepare(`
+    INSERT INTO employees (name, email, position, companyId) VALUES (?, ?, ?, ?);
+`)
+
+const deleteEmployee = db.prepare(`
+    DELETE FROM employees WHERE id = @id;
 `)
 
 
@@ -180,34 +205,29 @@ app.get('/interviews/:id', (req, res) => {
 })
 
 app.post('/interviews', (req, res) => {
-    // Create a new interview
-    const applicantId = req.body.applicantId
-    const interviewerId = req.body.interviewerId
-    const date = req.body.date
-    const score = req.body.score
+    // Create a new interview and update the interview so it can tell us if it was successful or not
+    
+    const applicant = getApplicantById.get({id: req.body.applicantId});
+    const interviewer = getInterviewerById.get({id: req.body.interviewerId});
 
-    const errors: string[] = []
-
-    if(typeof applicantId !== 'number'){
-        errors.push("The applicantId is not provided or is not a number");
+    if(req.body.successful === 1){
+        createNewEmployee.run({
+            name: applicant.name,
+            email: applicant.email,
+            position: req.body.position,
+            companyId: interviewer.companyId
+        })
     }
-    if(typeof interviewerId !== 'number'){
-        errors.push("The interviewerId is not provided or is not a number");
-    }
-    if(typeof date !== 'string'){
-        errors.push("The date is not provided or is not a string");
-    }
-    if(typeof score !== 'number'){
-        errors.push("The score is not provided or is not a number");
-    }
-
-    if(errors.length === 0){
-        const info = createNewInterview.run(applicantId, interviewerId, date, score);
-        const interview = getInterviewById.get(info.lastInsertRowid);
-        res.send(interview);
-    } else{
-        res.status(400).send({  error: errors   });
-    }
+    res.send(
+        createNewInterview.run({
+            applicantId: req.body.applicantId,
+            interviewerId: req.body.interviewerId,
+            date: req.body.date,
+            score: req.body.score,
+            position: req.body.position,
+            successful: req.body.successful
+        })
+    )
 })
 
 // company section of API 
@@ -252,6 +272,73 @@ app.post('/companies', (req, res) => {
         res.send(company);
     } else{
         res.status(400).send({  error: errors   });
+    }
+})
+
+// employees section of API 
+
+app.get('/employees', (req, res) => {
+    // get all employees
+
+    const employees = getAllEmployees.all();
+
+    res.send(employees);
+})
+
+app.get('/employees/:id', (req, res) => {
+    // get employee by id
+
+    const employee = getEmployeeById.get(req.params);
+
+    if(employee){
+        res.send(employee);
+    } else{
+        res.status(400).send("Employee not found");
+    }
+})
+
+app.post('/employees', (req, res) => {
+    // Create a new employee
+
+    const name = req.body.name
+    const email = req.body.email
+    const position = req.body.position
+    const companyId = req.body.companyId
+
+    const errors: string[] = []
+
+    if(typeof name !== 'string'){
+        errors.push("The name is not provided or is not a string");
+    }
+    if(typeof email !== 'string'){
+        errors.push("The email is not provided or is not a string");
+    }
+    if(typeof position !== 'string'){
+        errors.push("The position is not provided or is not a string");
+    }
+    if(typeof companyId !== 'number'){
+        errors.push("The companyId is not provided or is not a number");
+    }
+
+    if(errors.length === 0){
+        const info = createNewEmployee.run(name, email, position, companyId);
+        const employee = getEmployeeById.get(info.lastInsertRowid);
+        res.send(employee);
+    } else{
+        res.status(400).send({  error: errors   });
+    }
+})
+
+app.delete('/employees/:id', (req, res) => {
+    // fire employee by id
+
+    const employee = getEmployeeById.get(req.params);
+
+    if(employee){
+        deleteEmployee.run(req.params);
+        res.send("Employee: " + employee.name + " has been fired");
+    } else{
+        res.status(400).send("Employee not found!");
     }
 })
 
