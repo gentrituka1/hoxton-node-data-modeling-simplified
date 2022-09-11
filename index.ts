@@ -52,13 +52,28 @@ const createNewApplicant = db.prepare(`
 `)
 
 const createNewInterviewer = db.prepare(`
-    INSERT INTO interviewers (name, email) VALUES (@name, @email);
+    INSERT INTO interviewers (name, email, companyId) VALUES (@name, @email, companyId);
 `)
 
 const createNewInterview = db.prepare(`
     INSERT INTO interviews (applicantId, interviewerId, date, score) VALUES (@applicantId, @interviewerId, @date, @score);
 `)
 
+
+const getAllCompanies = db.prepare(`
+    SELECT * FROM companies;
+`)
+
+const getCompanyById = db.prepare(`
+    SELECT * FROM companies WHERE id = @id;
+`)
+
+const createNewCompany = db.prepare(`
+    INSERT INTO companies (name, city) VALUES (@name, @city);
+`)
+
+
+// applicants section of API
 
 app.post('/applicants', (req, res) => {
     // Create a new applicant
@@ -99,6 +114,22 @@ app.get('/applicants/:id', (req, res) => {
     }
 })
 
+// intervierwers section of API
+
+app.get('/interviewers/:id', (req, res) => {
+    //  - Get details of an interviewer, including a list of every interview they've conducted and who the applicant was
+
+    const interviewer = getInterviewerById.get(req.params);
+
+    if(interviewer){
+        interviewer.interviews = getInterviewsForInterviewer.all({interviewerId: interviewer.id});
+        interviewer.applicants = getApplicantsForInterviewer.all({interviewerId: interviewer.id});
+        res.send(interviewer);
+    } else{
+        res.status(400).send("Interviewer not found");
+    }
+})
+
 app.post('/interviewers', (req, res) => {
     // Create a new interviewer
     const name = req.body.name
@@ -124,19 +155,7 @@ app.post('/interviewers', (req, res) => {
     }
 })
 
-app.get('/interviewers/:id', (req, res) => {
-    //  - Get details of an interviewer, including a list of every interview they've conducted and who the applicant was
-
-    const interviewer = getInterviewerById.get(req.params);
-
-    if(interviewer){
-        interviewer.interviews = getInterviewsForInterviewer.all({interviewerId: interviewer.id});
-        interviewer.applicants = getApplicantsForInterviewer.all({interviewerId: interviewer.id});
-        res.send(interviewer);
-    } else{
-        res.status(400).send("Interviewer not found");
-    }
-})
+// interviews section of API
 
 app.get('/interviews', (req, res) => {
     // get all interviews, including the applicant and interviewer details
@@ -186,6 +205,51 @@ app.post('/interviews', (req, res) => {
         const info = createNewInterview.run(applicantId, interviewerId, date, score);
         const interview = getInterviewById.get(info.lastInsertRowid);
         res.send(interview);
+    } else{
+        res.status(400).send({  error: errors   });
+    }
+})
+
+// company section of API 
+
+app.get('/companies', (req, res) => {
+    // get all companies
+
+    const companies = getAllCompanies.all();
+
+    res.send(companies);
+})
+
+app.get('/companies/:id', (req, res) => {
+    // get company by id
+
+    const company = getCompanyById.get(req.params);
+
+    if(company){
+        res.send(company);
+    } else{
+        res.status(400).send("Company not found");
+    }
+})
+
+app.post('/companies', (req, res) => {
+    // Create a new company
+    const name = req.body.name
+    const city = req.body.city
+
+    const errors: string[] = []
+
+    if(typeof name !== 'string'){
+        errors.push("The name is not provided or is not a string");
+    }
+    if(typeof city !== 'string'){
+        errors.push("The city is not provided or is not a string");
+    }
+
+    if(errors.length === 0){
+        const info = createNewCompany.run(name, city);
+        const company = getCompanyById.get(info.lastInsertRowid);
+        res.send(company);
     } else{
         res.status(400).send({  error: errors   });
     }

@@ -53,17 +53,14 @@ function everythingInterviewers(){
             {
                 name: "Donald Resler",
                 email: "donald@gmail.com",
-                companyId: 1
             },
             {
                 name: "Tom Keen",
                 email: "tom@gmail.com",
-                companyId: 2
             },
             {
                 name: "Katarina Rostova",
                 email: "katarina@gmail.com",
-                companyId: 3
             }
         ]
 
@@ -79,13 +76,12 @@ function everythingInterviewers(){
             email TEXT NOT NULL,
             companyId INTEGER NOT NULL,
             PRIMARY KEY (id),
-            FOREIGN KEY (companyId) REFERENCES companies(id) ON DELETE CASCADE
         );
     `)
     createInterviewersTable.run();
 
     const createNewInterviewer = db.prepare(`
-        INSERT INTO interviewers (name, email, companyId) VALUES (@name, @email, @companyId);
+        INSERT INTO interviewers (name, email) VALUES (@name, @email);
     `)
 
     for(let interviewer of interviewers){
